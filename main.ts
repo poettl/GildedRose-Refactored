@@ -1,4 +1,3 @@
-// Core Domain: Qualitätsmanagement
 export class Item {
   name: string;
   sellIn: number;
@@ -13,7 +12,6 @@ export class Item {
   }
 
   updateQuality(): void {
-    // Standardimplementierung, kann von Unterklassen überschrieben werden
   }
 }
 
@@ -50,7 +48,7 @@ export class BackstagePass extends Item {
 
 export class Sulfuras extends Item {
   updateQuality(): void {
-    // Sulfuras ändert sich nicht
+    // quality never changes
   }
 }
 
@@ -72,7 +70,6 @@ export class ConjuredItem extends Item {
   }
 }
 
-// Supporting Domain: Produktverwaltung
 export class ProductCatalog {
   private items: Array<Item>;
 
@@ -93,7 +90,6 @@ export class ProductCatalog {
   }
 }
 
-// Supporting Domain: Warenkorbverwaltung
 export class ShoppingCartItem {
   item: Item;
   amount: number;
@@ -110,28 +106,32 @@ export class ShoppingCartItem {
 
 export class ShoppingCart {
   private items: Array<ShoppingCartItem>;
+  private priceCalculator:PriceCalculator;
+  private totalPrice:double;
 
   constructor() {
     this.items = [];
+    this.priceCalculator = new PriceCalculator();
   }
 
   addItem(item: Item, amount: number): void {
-    const price = item.basePrice;
-    const cartItem = new ShoppingCartItem(item, amount, price);
-    this.items.push(cartItem);
+      const existingCartItem = this.items.find(cartItem => cartItem.item === item);
+      if (existingCartItem) {
+          existingCartItem.amount += amount;
+      } else {
+          const price = item.basePrice;
+          const cartItem = new ShoppingCartItem(item, amount, price);
+          this.items.push(cartItem);
+      }
+     this.totalPrice = this.priceCalculator.calculatePrice(this.items, currency);
   }
 
   removeItem(item: Item): void {
     this.items = this.items.filter(i => i.item !== item);
-  }
-
-  getTotalPrice(currency: string): number {
-    const priceCalculator = new PriceCalculator();
-    return priceCalculator.calculatePrice(this.items, currency);
+    this.totalPrice = this.priceCalculator.calculatePrice(this.items, currency);
   }
 }
 
-// Supporting Domain: Preismanagement
 export class PriceCalculator {
   private discountStrategies: Array<DiscountStrategy>;
 
@@ -144,24 +144,20 @@ export class PriceCalculator {
   }
 
   calculatePrice(items: Array<ShoppingCartItem>, currency: string): number {
-    // Rabatte anwenden
     for (const strategy of this.discountStrategies) {
       strategy.applyDiscount(items);
     }
 
-    // Preise summieren
     let total = 0;
     for (const item of items) {
       total += item.individualDiscountedPrice * item.amount;
     }
 
-    // Währungsumrechnung
     const converter = new CurrencyConverter();
     return converter.convert(total, currency);
   }
 }
 
-// Supporting Domain: Rabattmanagement
 export interface DiscountStrategy {
   applyDiscount(items: Array<ShoppingCartItem>): void;
 }
@@ -184,10 +180,8 @@ export class SeasonalDiscount implements DiscountStrategy {
   }
 }
 
-// Generic Domain: Währungsumrechnung
 export class CurrencyConverter {
   convert(amount: number, currency: string): number {
-    // Vereinfachte Umrechnung (1:1)
     return amount;
   }
 }
