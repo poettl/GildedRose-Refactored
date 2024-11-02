@@ -4,15 +4,19 @@ export class Item {
   quality: number;
   basePrice: number;
 
-  constructor(name: string, sellIn: number, quality: number, basePrice: number) {
+  constructor(
+    name: string,
+    sellIn: number,
+    quality: number,
+    basePrice: number
+  ) {
     this.name = name;
     this.sellIn = sellIn;
     this.quality = quality;
     this.basePrice = basePrice;
   }
 
-  updateQuality(): void {
-  }
+  updateQuality(): void {}
 }
 
 export class AgedBrie extends Item {
@@ -82,7 +86,7 @@ export class ProductCatalog {
   }
 
   removeItem(item: Item): void {
-    this.items = this.items.filter(i => i !== item);
+    this.items = this.items.filter((i) => i !== item);
   }
 
   getItems(): Array<Item> {
@@ -106,29 +110,45 @@ export class ShoppingCartItem {
 
 export class ShoppingCart {
   private items: Array<ShoppingCartItem>;
-  private priceCalculator:PriceCalculator;
-  private totalPrice:double;
+  private priceCalculator: PriceCalculator;
+  private totalPrice: number;
+  private currency: string;
 
   constructor() {
     this.items = [];
+
     this.priceCalculator = new PriceCalculator();
+    const bulkDiscount = new BulkDiscount();
+    const seasonalDiscount = new SeasonalDiscount();
+    this.priceCalculator.addDiscountStrategy(bulkDiscount);
+    this.priceCalculator.addDiscountStrategy(seasonalDiscount);
+
+    this.currency = "EUR";
   }
 
   addItem(item: Item, amount: number): void {
-      const existingCartItem = this.items.find(cartItem => cartItem.item === item);
-      if (existingCartItem) {
-          existingCartItem.amount += amount;
-      } else {
-          const price = item.basePrice;
-          const cartItem = new ShoppingCartItem(item, amount, price);
-          this.items.push(cartItem);
-      }
-     this.totalPrice = this.priceCalculator.calculatePrice(this.items, currency);
+    const existingCartItem = this.items.find(
+      (cartItem) => cartItem.item === item
+    );
+    if (existingCartItem) {
+      existingCartItem.amount += amount;
+    } else {
+      const price = item.basePrice;
+      const cartItem = new ShoppingCartItem(item, amount, price);
+      this.items.push(cartItem);
+    }
+    this.totalPrice = this.priceCalculator.calculatePrice(
+      this.items,
+      this.currency
+    );
   }
 
   removeItem(item: Item): void {
-    this.items = this.items.filter(i => i.item !== item);
-    this.totalPrice = this.priceCalculator.calculatePrice(this.items, currency);
+    this.items = this.items.filter((i) => i.item !== item);
+    this.totalPrice = this.priceCalculator.calculatePrice(
+      this.items,
+      this.currency
+    );
   }
 }
 
@@ -166,7 +186,7 @@ export class BulkDiscount implements DiscountStrategy {
   applyDiscount(items: Array<ShoppingCartItem>): void {
     for (const item of items) {
       if (item.amount >= 10) {
-        item.individualDiscountedPrice *= 0.9; // 10% Rabatt
+        item.individualDiscountedPrice *= 0.9;
       }
     }
   }
@@ -175,13 +195,15 @@ export class BulkDiscount implements DiscountStrategy {
 export class SeasonalDiscount implements DiscountStrategy {
   applyDiscount(items: Array<ShoppingCartItem>): void {
     for (const item of items) {
-      item.individualDiscountedPrice *= 0.95; // 5% Rabatt
+      item.individualDiscountedPrice *= 0.95;
     }
   }
 }
 
 export class CurrencyConverter {
   convert(amount: number, currency: string): number {
+    // Hier würde die Umrechnung stattfinden
+    // leer weil als Generic Subdomain ein externer Service verwendet wird
     return amount;
   }
 }
